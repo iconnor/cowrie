@@ -19,4 +19,4 @@ class Command_while(HoneyPotCommand):
         return self.fs.file_contents('/proc/while')
 
 
-commands["which"] = Command_while
+commands["while"] = Command_while
