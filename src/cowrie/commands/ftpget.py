@@ -1,5 +1,6 @@
 # Author: Claud Xiao
 
+from __future__ import annotations
 
 import ftplib
 import getopt
@@ -33,7 +34,7 @@ class FTP(ftplib.FTP):
             (self.host, self.port), self.timeout, self.source_address
         )
         self.af = self.sock.family
-        self.file = self.sock.makefile(mode="rb")
+        self.file = self.sock.makefile(mode="r")
         self.welcome = self.getresp()
         return self.welcome
 
@@ -66,7 +67,7 @@ class FTP(ftplib.FTP):
                 if resp[0] != "1":
                     raise ftplib.error_reply(resp)
                 conn, sockaddr = sock.accept()
-                if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
+                if self.timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:  # type: ignore
                     conn.settimeout(self.timeout)
             finally:
                 sock.close()

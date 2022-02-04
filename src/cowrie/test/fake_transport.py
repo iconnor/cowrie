@@ -1,21 +1,20 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
-from typing import Callable, Dict, List, Optional, Set
+from __future__ import annotations
+
+from typing import Callable
 
 from twisted.conch.insults import insults
 from twisted.test import proto_helpers
 
 
 class Container:
-    """
-    This class is placeholder for creating a fake interface
+    """This class is placeholder for creating a fake interface.
+
     @var host Client fake information
     @var port Fake Port for connection
     @var otherVersionString version
-    @var
     """
 
     otherVersionString = "1.0"
@@ -23,35 +22,29 @@ class Container:
     id = "test-suite"
     sessionno = 1
     starttime = 0
-    session: Optional["Container"]
-    sessions: Dict[int, str] = {}
-    conn: Optional["Container"]
-    transport: Optional["Container"]
-    factory: Optional["Container"]
+    session: Container | None
+    sessions: dict[int, str] = {}
+    conn: Container | None
+    transport: Container | None
+    factory: Container | None
 
     def getPeer(self):
-        """
-        Fake function for mockup
-        """
+        """Fake function for mockup."""
         self.host = "1.1.1.1"
         self.port = 2222
         return self
 
     def processEnded(self, reason):
-        """
-        Fake function for mockup
-        """
+        """Fake function for mockup."""
         pass
 
 
 class FakeTransport(proto_helpers.StringTransport):
-    """
-    Fake transport with abortConnection() method.
-    """
+    """Fake transport with abortConnection() method."""
 
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
-    redirFiles: Set[List[str]] = set()
+    redirFiles: set[list[str]] = set()
     width = 80
     height = 24
     void = object()
@@ -86,7 +79,7 @@ class FakeTransport(proto_helpers.StringTransport):
     TAB = "\x09"
     BACKSPACE = "\x08"
 
-    modes: Dict[str, Callable] = {}
+    modes: dict[str, Callable] = {}
 
     # '\x01':     self.handle_HOME,	# CTRL-A
     # '\x02':     self.handle_LEFT,	# CTRL-B
@@ -117,7 +110,7 @@ class FakeTransport(proto_helpers.StringTransport):
     transport.session.conn.transport.factory.sessions = {}
     transport.session.conn.transport.factory.starttime = 0
     factory = Container()
-    session: Dict[str, str] = {}
+    session: dict[str, str] = {}
 
     def abortConnection(self):
         self.aborting = True
@@ -130,8 +123,7 @@ class FakeTransport(proto_helpers.StringTransport):
                 pass
 
     def setPrivateModes(self, modes):
-        """
-        Enable the given modes.
+        """Enable the given modes.
 
         Track which modes have been enabled so that the implementations of
         other L{insults.ITerminalTransport} methods can be properly implemented

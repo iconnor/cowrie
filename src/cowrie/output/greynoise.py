@@ -1,6 +1,7 @@
 """
 Send attackers IP to GreyNoise
 """
+from __future__ import annotations
 
 import treq
 
@@ -48,17 +49,19 @@ class Output(cowrie.core.output.Output):
             if query["noise"]:
                 log.msg(
                     eventid="cowrie.greynoise.result",
+                    session=entry["session"],
                     format=f"GreyNoise: {query['ip']} has been observed scanning the Internet. GreyNoise "
                     f"classification is {query['classification']} and the believed owner is {query['name']}",
                 )
             if query["riot"]:
                 log.msg(
                     eventid="cowrie.greynoise.result",
+                    session=entry["session"],
                     format=f"GreyNoise: {query['ip']} belongs to a benign service or provider. "
                     f"The owner is {query['name']}.",
                 )
 
-        gn_url = f"{GNAPI_URL}{entry['src_ip']}".encode("utf8")
+        gn_url = f"{GNAPI_URL}{entry['src_ip']}".encode()
         headers = {"User-Agent": [COWRIE_USER_AGENT], "key": self.apiKey}
 
         try:

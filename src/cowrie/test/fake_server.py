@@ -1,14 +1,14 @@
-# -*- test-case-name: Cowrie Test Cases -*-
-
 # Copyright (c) 2016 Dave Germiquet
 # See LICENSE for details.
 
+from __future__ import annotations
 
 from cowrie.shell import fs
 
 
 class FakeServer:
-    """
+    """FakeServer class.
+
     @ivar hostname Servers Host Name
     @ivar fs File System for cowrie to use
     """
@@ -22,13 +22,13 @@ class FakeServer:
 
 
 class FakeAvatar:
-    """
+    """FakeAvatar class.
+
     @var avatar itself
     @ivar server server configuration
     @var fs File System for cowrie to use
     @var environ for user
     @var uid for user
-    @var
     """
 
     def __init__(self, server):

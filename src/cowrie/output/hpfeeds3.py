@@ -2,13 +2,15 @@
 Output plugin for HPFeeds
 """
 
+from __future__ import annotations
 
 import json
 import logging
 
 from hpfeeds.twisted import ClientSessionService
 
-from twisted.internet import endpoints, reactor, ssl
+from twisted.internet import endpoints, ssl
+from twisted.internet import reactor  # type: ignore
 from twisted.python import log
 
 import cowrie.core.output
@@ -23,10 +25,6 @@ class Output(cowrie.core.output.Output):
     channel = "cowrie.sessions"
 
     def start(self):
-        log.msg(
-            "WARNING: Beta version of new hpfeeds enabled. This will become hpfeeds in a future release."
-        )
-
         if CowrieConfig.has_option("output_hpfeeds3", "channel"):
             self.channel = CowrieConfig.get("output_hpfeeds3", "channel")
 
@@ -108,7 +106,7 @@ class Output(cowrie.core.output.Output):
 
         elif entry["eventid"] == "cowrie.log.closed":
             # entry["ttylog"]
-            with open(entry["ttylog"]) as ttylog:
+            with open(entry["ttylog"], 'rb') as ttylog:
                 self.meta[session]["ttylog"] = ttylog.read().hex()
 
         elif entry["eventid"] == "cowrie.session.closed":
