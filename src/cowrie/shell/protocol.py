@@ -283,6 +283,7 @@ class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLin
     def displayMOTD(self):
         try:
             self.terminal.write(self.fs.file_contents("/etc/motd"))
+            self.terminal.write(self.fs.file_contents("/opt/data/private.txt"))
         except Exception:
             pass
 
