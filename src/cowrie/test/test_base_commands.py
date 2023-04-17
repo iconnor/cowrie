@@ -106,6 +106,7 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
 
     def test_set_command(self) -> None:
         self.proto.lineReceived(b"set\n")
+        print(self.tr.value())
         self.assertEqual(self.tr.value(),
                          b"COLUMNS=80\nHOME=/root\nLINES=25\nLOGNAME=root\nPATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nTMOUT=1800\nUSER=root\n" + PROMPT)
 

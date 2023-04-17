@@ -59,6 +59,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.sessionno: int
         self.factory = None
 
+        print("Checking directory for cwd", user.avatar.home, self.fs.exists(user.avatar.home))
         if self.fs.exists(user.avatar.home):
             self.cwd = user.avatar.home
         else:
