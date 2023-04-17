@@ -40,7 +40,7 @@ class Artifact:
     def __init__(self, label: str) -> None:
         self.label: str = label
 
-        self.fp = tempfile.NamedTemporaryFile(dir=self.artifactDir, delete=False)
+        self.fp = tempfile.NamedTemporaryFile(dir=self.artifactDir, delete=False)  # pylint: disable=R1732
         self.tempFilename = self.fp.name
         self.closed: bool = False
 
@@ -59,8 +59,8 @@ class Artifact:
         self.close()
         return True
 
-    def write(self, bytes: bytes) -> None:
-        self.fp.write(bytes)
+    def write(self, data: bytes) -> None:
+        self.fp.write(data)
 
     def fileno(self) -> Any:
         return self.fp.fileno()

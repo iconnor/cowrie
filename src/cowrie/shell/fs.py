@@ -9,8 +9,10 @@ import errno
 import fnmatch
 import hashlib
 import os
+from pathlib import Path
 import pickle
 import re
+import sys
 import stat
 import time
 from typing import Any, Optional
@@ -73,23 +75,11 @@ class TooManyLevels(Exception):
     raise OSError(errno.ELOOP, os.strerror(errno.ENOENT))
     """
 
-    pass
-
-
-class IsADirectoryError(Exception):
-    """
-    Something is a directory where the user was expecting a file
-    """
-
-    pass
-
 
 class FileNotFound(Exception):
     """
     raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
     """
-
-    pass
 
 
 class PermissionDenied(Exception):
@@ -111,8 +101,6 @@ class PermissionDenied(Exception):
     touch: cannot touch '/sys/fs/fuse/connections/.nippon': Permission denied
     """
 
-    pass
-
 
 class HoneyPotFilesystem:
     def __init__(self, arch: str, home: str) -> None:
@@ -127,7 +115,7 @@ class HoneyPotFilesystem:
                 self.fs = pickle.load(f, encoding="utf8")
         except Exception as e:
             log.err(e, "ERROR: Failed to load filesystem")
-            exit(2)
+            sys.exit(2)
 
         # Keep track of arch so we can return appropriate binary
         self.arch: str = arch
@@ -150,7 +138,7 @@ class HoneyPotFilesystem:
         the virtual filesystem.
         """
 
-        for path, directories, filenames in os.walk(honeyfs_path):
+        for path, _directories, filenames in os.walk(honeyfs_path):
             for filename in filenames:
                 realfile_path: str = os.path.join(path, filename)
                 virtual_path: str = "/" + os.path.relpath(realfile_path, honeyfs_path)
@@ -181,11 +169,11 @@ class HoneyPotFilesystem:
             cwdpieces = [x for x in cwd.split("/") if len(x) and x is not None]
 
         while 1:
-            if not len(pieces):
+            if not pieces:
                 break
             piece = pieces.pop(0)
             if piece == "..":
-                if len(cwdpieces):
+                if cwdpieces:
                     cwdpieces.pop()
                 continue
             if piece in (".", ""):
@@ -208,7 +196,7 @@ class HoneyPotFilesystem:
         found: list[str] = []
 
         def foo(p, cwd):
-            if not len(p):
+            if not p:
                 found.append("/{}".format("/".join(cwd)))
             elif p[0] == ".":
                 foo(p[1:], cwd)
@@ -229,7 +217,7 @@ class HoneyPotFilesystem:
         """
         cwd: list[Any] = self.fs
         for part in path.split("/"):
-            if not len(part):
+            if not part:
                 continue
             ok = False
             for c in cwd[A_CONTENTS]:
@@ -332,20 +320,19 @@ class HoneyPotFilesystem:
         f: Any = self.getfile(path)
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
-        elif f[A_TYPE] == T_FILE and f[A_REALFILE]:
-            return open(f[A_REALFILE], "rb").read()
-        elif f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
+        if f[A_TYPE] == T_FILE and f[A_REALFILE]:
+            return Path(f[A_REALFILE]).read_bytes()
+        if f[A_TYPE] == T_FILE and f[A_SIZE] == 0:
             # Zero-byte file lacking A_REALFILE backing: probably empty.
             # (The exceptions to this are some system files in /proc and /sys,
             # but it's likely better to return nothing than suspiciously fail.)
             return b""
-        elif f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
+        if f[A_TYPE] == T_FILE and f[A_MODE] & stat.S_IXUSR:
             return open(
                 CowrieConfig.get("honeypot", "share_path") + "/arch/" + self.arch,
                 "rb",
             ).read()
-        else:
-            return b""
+        return b""
 
     def mkfile(
         self,
@@ -386,13 +373,13 @@ class HoneyPotFilesystem:
             raise OSError(errno.EDQUOT, os.strerror(errno.EDQUOT), path)
         if ctime is None:
             ctime = time.time()
-        if not len(path.strip("/")):
+        if not path.strip("/"):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
         try:
-            dir = self.get_path(os.path.dirname(path.strip("/")))
+            directory = self.get_path(os.path.dirname(path.strip("/")))
         except IndexError:
-            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path)
-        dir.append(
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), path) from None
+        directory.append(
             [os.path.basename(path), T_DIR, uid, gid, size, mode, ctime, [], None, None]
         )
         self.newcount += 1
@@ -410,8 +397,7 @@ class HoneyPotFilesystem:
             return False
         if f[A_TYPE] == T_FILE:
             return True
-        else:
-            return False
+        return False
 
     def islink(self, path: str) -> bool:
         """
@@ -427,8 +413,7 @@ class HoneyPotFilesystem:
             return False
         if f[A_TYPE] == T_LINK:
             return True
-        else:
-            return False
+        return False
 
     def isdir(self, path: str) -> bool:
         """
@@ -438,19 +423,16 @@ class HoneyPotFilesystem:
         if path == "/":
             return True
         try:
-            dir = self.getfile(path)
+            directory = self.getfile(path)
         except Exception:
-            dir = None
-        if dir is None:
+            directory = None
+        if directory is None:
             return False
-        if dir[A_TYPE] == T_DIR:
+        if directory[A_TYPE] == T_DIR:
             return True
-        else:
-            return False
+        return False
 
-    """
-    Below additions for SFTP support, try to keep functions here similar to os.*
-    """
+    # Below additions for SFTP support, try to keep functions here similar to os.*
 
     def open(self, filename: str, openFlags: int, mode: int) -> Optional[int]:
         """
@@ -486,7 +468,7 @@ class HoneyPotFilesystem:
             return fd
 
         # TODO: throw exception
-        elif openFlags & os.O_RDONLY == os.O_RDONLY:
+        if openFlags & os.O_RDONLY == os.O_RDONLY:
             return None
 
         # TODO: throw exception
@@ -503,9 +485,8 @@ class HoneyPotFilesystem:
         if not fd:
             return
         if self.tempfiles[fd] is not None:
-            shasum: str = hashlib.sha256(
-                open(self.tempfiles[fd], "rb").read()
-            ).hexdigest()
+            with open(self.tempfiles[fd], "rb") as f:
+                shasum: str = hashlib.sha256(f.read()).hexdigest()
             shasumfile: str = (
                 CowrieConfig.get("honeypot", "download_path") + "/" + shasum
             )
@@ -534,8 +515,8 @@ class HoneyPotFilesystem:
         """
         FIXME mkdir() name conflicts with existing mkdir
         """
-        dir: Optional[list[Any]] = self.getfile(path)
-        if dir:
+        directory: Optional[list[Any]] = self.getfile(path)
+        if directory:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), path)
         self.mkdir(path, 0, 0, 4096, 16877)
 
@@ -543,10 +524,10 @@ class HoneyPotFilesystem:
         p: str = path.rstrip("/")
         name: str = os.path.basename(p)
         parent: str = os.path.dirname(p)
-        dir: Any = self.getfile(p, follow_symlinks=False)
-        if not dir:
+        directory: Any = self.getfile(p, follow_symlinks=False)
+        if not directory:
             raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), p)
-        if dir[A_TYPE] != T_DIR:
+        if directory[A_TYPE] != T_DIR:
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), p)
         if len(self.get_path(p)) > 0:
             raise OSError(errno.ENOTEMPTY, os.strerror(errno.ENOTEMPTY), p)
@@ -557,7 +538,7 @@ class HoneyPotFilesystem:
                 return True
         return False
 
-    def utime(self, path: str, atime: float, mtime: float) -> None:
+    def utime(self, path: str, _atime: float, mtime: float) -> None:
         p: Optional[list[Any]] = self.getfile(path)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
@@ -588,7 +569,7 @@ class HoneyPotFilesystem:
         p: Optional[list[Any]] = self.getfile(path, follow_symlinks=False)
         if not p:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
-        if not (p[A_MODE] & stat.S_IFLNK):
+        if not p[A_MODE] & stat.S_IFLNK:
             raise OSError
         return p[A_TARGET]  # type: ignore
 
