@@ -206,7 +206,7 @@ class HoneyPotFilesystem:
                 names = [x[A_NAME] for x in self.get_path("/".join(cwd))]
                 matches = [x for x in names if fnmatch.fnmatchcase(x, p[0])]
                 for match in matches:
-                    foo(p[1:], cwd + [match])
+                    foo(p[1:], [*cwd, match])
 
         foo(pieces, cwdpieces)
         return found
@@ -598,7 +598,6 @@ class HoneyPotFilesystem:
     def stat(self, path: str, follow_symlinks: bool = True) -> _statobj:
         p: Optional[list[Any]]
         if path == "/":
-            # TODO: shouldn't this be a list?
             p = []
             p[A_TYPE] = T_DIR
             p[A_UID] = 0
