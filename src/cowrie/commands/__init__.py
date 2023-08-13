@@ -52,5 +52,6 @@ __all__ = [
     "wc",
     "wget",
     "which",
+    "while",
     "yum",
 ]

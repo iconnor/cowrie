@@ -62,8 +62,8 @@ RUN python3 -m venv cowrie-env && \
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
 
-FROM gcr.io/distroless/python3-debian11 AS runtime
-#FROM gcr.io/distroless/python3-debian11:debug AS runtime
+#FROM gcr.io/distroless/python3-debian11 AS runtime
+FROM gcr.io/distroless/python3-debian11:debug AS runtime
 
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"

@@ -355,6 +355,8 @@ class HoneyPotShell:
             homelen = len(self.protocol.user.avatar.home)
             if cwd == self.protocol.user.avatar.home:
                 cwd = "~"
+            elif len(cwd) == 1:
+                cwd = "~"
             elif (
                 len(cwd) > (homelen + 1)
                 and cwd[: (homelen + 1)] == self.protocol.user.avatar.home + "/"
