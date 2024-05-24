@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import random
 import re
-from typing import Any, Optional
+from typing import Any
 from collections.abc import Callable
 
 from twisted.internet import defer
@@ -41,7 +41,7 @@ class Command_yum(HoneyPotCommand):
     Any installed packages, places a 'Segfault' at /usr/bin/PACKAGE.'''
     """
 
-    packages: dict[str, dict[str, Any]] = {}
+    packages: dict[str, dict[str, Any]]
 
     def start(self) -> None:
         if len(self.args) == 0:
@@ -52,8 +52,9 @@ class Command_yum(HoneyPotCommand):
             self.do_install()
         else:
             self.do_locked()
+        self.packages = {}
 
-    def sleep(self, time: float, time2: Optional[float] = None) -> defer.Deferred:
+    def sleep(self, time: float, time2: float | None = None) -> defer.Deferred:
         d: defer.Deferred = defer.Deferred()
         if time2:
             time = random.randint(int(time * 100), int(time2 * 100)) / 100.0
@@ -201,9 +202,7 @@ Options:
 
         for y in [re.sub("[^A-Za-z0-9]", "", x) for x in self.args[1:]]:
             self.packages[y] = {
-                "version": "{}.{}-{}".format(
-                    random.choice([0, 1]), random.randint(1, 40), random.randint(1, 10)
-                ),
+                "version": f"{random.choice([0, 1])}.{random.randint(1, 40)}-{random.randint(1, 10)}",
                 "size": random.randint(100, 900),
                 "release": f"{random.randint(1, 15)}.el7",
             }
@@ -216,9 +215,7 @@ Options:
         )
         yield self.sleep(2.2)
         self.write(
-            "{} packages excluded due to repository priority protections\n".format(
-                random.randint(200, 300)
-            )
+            f"{random.randint(200, 300)} packages excluded due to repository priority protections\n"
         )
         yield self.sleep(0.9)
         self.write("Resolving Dependencies\n")
